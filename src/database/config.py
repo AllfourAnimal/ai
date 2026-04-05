@@ -8,14 +8,16 @@ from typing import Optional
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 DEFAULT_ENV_PATH = ROOT_DIR / ".env"
+DEFAULT_DB_PATH = ROOT_DIR / "data" / "seoul_animals.db"
 DEFAULT_DISTRICT_REGISTRY_PATH = ROOT_DIR / "src" / "database" / "config" / "seoul_districts.json"
 
 
 @dataclass(frozen=True)
 class DatabaseSettings:
     service_key: str
+    database_path: Path
     district_registry_path: Path
-    timeout_seconds: float = 20.0
+    timeout_seconds: float = 50.0
 
 
 def load_settings(env_path: Optional[Path] = None) -> DatabaseSettings:
@@ -28,6 +30,9 @@ def load_settings(env_path: Optional[Path] = None) -> DatabaseSettings:
             "ANIMAL_API_SERVICE_KEY is not set. Add it to the repository root .env file."
         )
 
+    database_path = Path(
+        os.getenv("ANIMAL_DB_PATH", str(DEFAULT_DB_PATH))
+    ).expanduser()
     district_registry_path = Path(
         os.getenv("ANIMAL_DISTRICT_REGISTRY_PATH", str(DEFAULT_DISTRICT_REGISTRY_PATH))
     ).expanduser()
@@ -35,6 +40,7 @@ def load_settings(env_path: Optional[Path] = None) -> DatabaseSettings:
 
     return DatabaseSettings(
         service_key=service_key,
+        database_path=database_path,
         district_registry_path=district_registry_path,
         timeout_seconds=timeout_seconds,
     )

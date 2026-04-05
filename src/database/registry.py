@@ -27,6 +27,9 @@ class DistrictRegistry:
     def all(self) -> list[DistrictCode]:
         return list(self._districts)
 
+    def seoul_districts(self) -> list[DistrictCode]:
+        return [district for district in self._districts if district.name.endswith("구")]
+
     def get_by_name(self, name: str) -> DistrictCode:
         normalized_name = name.strip()
         try:

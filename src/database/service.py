@@ -1,113 +1,78 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 from .client import GovAnimalApiClient
-from .models import AnimalRecord, ShelterRecord, ShelterSummary
+from .models import DistrictCode, ShelterRecord
 from .registry import DistrictRegistry
+from .storage import AnimalRepository
+
+
+Animal = Dict[str, Optional[str]]
 
 
 @dataclass(frozen=True)
-class DistrictAnimalsResult:
+class SyncSummary:
     district_name: str
-    district_org_cd: str
-    district_upr_cd: str
-    requested_animals: int
     shelter_count: int
-    collected_animals: int
-    shelters: list[ShelterSummary]
-    animals: list[Dict[str, Optional[str]]]
+    animal_count: int
 
 
-class AnimalAbandonmentService:
+class SeoulAnimalSyncService:
     def __init__(
         self,
         client: GovAnimalApiClient,
         registry: DistrictRegistry,
+        repository: AnimalRepository,
     ) -> None:
         self._client = client
         self._registry = registry
+        self._repository = repository
 
-    def fetch_district_animals(
-        self,
-        district_name: str,
-        animal_limit: int = 100,
-    ) -> DistrictAnimalsResult:
-        district = self._registry.get_by_name(district_name)
+    def sync_all_seoul(self) -> List[SyncSummary]:
+        return [self.sync_district(district) for district in self._registry.seoul_districts()]
+
+    def sync_district(self, district: DistrictCode) -> SyncSummary:
         shelters = sorted(
             self._client.fetch_shelters(district.upr_cd, district.org_cd),
             key=lambda shelter: shelter.care_name,
         )
-        animals = self._collect_animals(shelters, animal_limit)
-        return DistrictAnimalsResult(
+
+        animals = self._collect_animals(shelters)
+        stored_count = self._repository.replace_district_animals(district.name, animals)
+        return SyncSummary(
             district_name=district.name,
-            district_org_cd=district.org_cd,
-            district_upr_cd=district.upr_cd,
-            requested_animals=animal_limit,
             shelter_count=len(shelters),
-            collected_animals=len(animals),
-            shelters=[_to_shelter_summary(shelter) for shelter in shelters],
-            animals=animals,
+            animal_count=stored_count,
         )
 
-    def _collect_animals(
-        self,
-        shelters: list[ShelterRecord],
-        animal_limit: int,
-    ) -> list[Dict[str, Optional[str]]]:
-        collected: list[Dict[str, Optional[str]]] = []
-        page_size = 100
+    def _collect_animals(self, shelters: List[ShelterRecord]) -> List[Animal]:
+        animals_by_id: Dict[str, Animal] = {}
 
         for shelter in shelters:
-            if len(collected) >= animal_limit or not shelter.care_reg_no:
-                break
+            if not shelter.care_reg_no:
+                continue
 
             page_no = 1
             fetched_for_shelter = 0
-            while len(collected) < animal_limit:
+            while True:
                 animals, total_count = self._client.fetch_abandoned_animals(
                     shelter.care_reg_no,
                     page_no=page_no,
-                    num_of_rows=page_size,
+                    num_of_rows=100,
                 )
-
                 if not animals:
                     break
 
                 fetched_for_shelter += len(animals)
-                protected_animals = [
-                    _to_animal_summary(animal)
-                    for animal in animals
-                    if _is_protected(animal)
-                ]
-                remaining = animal_limit - len(collected)
-                collected.extend(protected_animals[:remaining])
+                for animal in animals:
+                    desertion_no = animal.get("desertionNo")
+                    if desertion_no:
+                        animals_by_id[desertion_no] = animal
 
-                if len(collected) >= animal_limit or fetched_for_shelter >= total_count:
+                if fetched_for_shelter >= total_count:
                     break
-
                 page_no += 1
 
-        return collected
-
-
-def _to_shelter_summary(shelter: ShelterRecord) -> ShelterSummary:
-    return ShelterSummary(
-        care_reg_no=shelter.care_reg_no,
-        care_name=shelter.care_name,
-        care_addr=shelter.care_addr,
-        care_tel=shelter.care_tel,
-        lat=shelter.lat,
-        lng=shelter.lng,
-        save_target_animal=shelter.save_target_animal,
-    )
-
-
-def _is_protected(animal: AnimalRecord) -> bool:
-    process_state = animal.fields.get("processState")
-    return process_state is not None and process_state.strip() == "보호중"
-
-
-def _to_animal_summary(animal: AnimalRecord) -> Dict[str, Optional[str]]:
-    return dict(animal.fields)
+        return list(animals_by_id.values())

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Optional
 
 
 ANIMAL_ITEM_FIELDS = (
@@ -91,21 +90,3 @@ class ShelterRecord:
     lng: str
     save_target_animal: str
     raw: dict
-
-
-@dataclass(frozen=True)
-class AnimalRecord:
-    fields: Dict[str, Optional[str]]
-    raw: dict
-
-
-@dataclass(frozen=True)
-class ShelterSummary:
-    care_reg_no: str
-    care_name: str
-    care_addr: str
-    care_tel: str
-    lat: str
-    lng: str
-    save_target_animal: str
-

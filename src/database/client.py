@@ -6,7 +6,7 @@ from urllib.parse import unquote, urlencode
 from urllib.request import Request, urlopen
 
 from .config import DatabaseSettings
-from .models import ANIMAL_ITEM_FIELDS, AnimalRecord, ShelterRecord
+from .models import ANIMAL_ITEM_FIELDS, ShelterRecord
 
 
 SHELTER_API_URL = "http://apis.data.go.kr/1543061/abandonmentPublicService_v2/shelter_v2"
@@ -36,7 +36,7 @@ class GovAnimalApiClient:
         *,
         page_no: int = 1,
         num_of_rows: int = 100,
-    ) -> tuple[list[AnimalRecord], int]:
+    ) -> tuple[list[Dict[str, Optional[str]]], int]:
         payload = self._request_json(
             ABANDONMENT_API_URL,
             {
@@ -109,11 +109,8 @@ def _to_shelter_record(item: dict[str, Any]) -> ShelterRecord:
     )
 
 
-def _to_animal_record(item: dict[str, Any]) -> AnimalRecord:
-    return AnimalRecord(
-        fields=_normalize_animal_item(item),
-        raw=item,
-    )
+def _to_animal_record(item: dict[str, Any]) -> Dict[str, Optional[str]]:
+    return _normalize_animal_item(item)
 
 
 def _normalize_animal_item(item: dict[str, Any]) -> Dict[str, Optional[str]]:

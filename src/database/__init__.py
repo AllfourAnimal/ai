@@ -1,9 +1,11 @@
 from .config import DatabaseSettings, load_settings
-from .service import AnimalAbandonmentService, DistrictAnimalsResult
+from .service import SeoulAnimalSyncService, SyncSummary
+from .storage import AnimalRepository
 
 __all__ = [
-    "AnimalAbandonmentService",
+    "AnimalRepository",
     "DatabaseSettings",
-    "DistrictAnimalsResult",
+    "SeoulAnimalSyncService",
+    "SyncSummary",
     "load_settings",
 ]
