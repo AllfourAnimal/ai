@@ -1,2 +1,5 @@
+# Core server dependencies
 fastapi==0.116.1
 uvicorn[standard]==0.35.0
+
+# The animal API demo under src/database uses Python standard library only.

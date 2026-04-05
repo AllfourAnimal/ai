@@ -3,11 +3,14 @@ name = "ai-server"
 version = "0.1.0"
 description = "Separated chatbot and recommendation FastAPI servers"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.9"
 dependencies = [
     "fastapi==0.116.1",
     "uvicorn[standard]==0.35.0",
 ]
+
+[project.scripts]
+animal-demo = "database.demo:main"
 
 [build-system]
 requires = ["setuptools>=68", "wheel"]
