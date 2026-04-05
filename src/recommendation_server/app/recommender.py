@@ -7,6 +7,21 @@ from typing import Any, Dict, List, Optional
 
 PreferenceMap = Dict[str, bool]
 Animal = Dict[str, Optional[str]]
+ANIMAL_TYPE_MAP = {"강아지": "개", "고양이": "고양이"}
+SEX_CODE_MAP = {
+    "수컷": {"수컷", "M"},
+    "암컷": {"암컷", "F"},
+    "미상": {"미상", "Q"},
+}
+IMAGE_FIELDS = tuple(f"popfile{i}" for i in range(1, 9))
+BASE_RESPONSE_FIELDS = (
+    "noticeNo",
+    "colorCd",
+    "careNm",
+    "processState",
+    "sexCd",
+    "neuterYn",
+)
 
 PREFERENCE_KEYWORDS = {
     "온순함": ["얌전", "온순", "순한"],
@@ -38,7 +53,7 @@ def recommend_animals(
     filtered = _filter_by_animal(filtered, preferred_animal)
     filtered = _filter_by_size(filtered, preferred_animal, preferred_size)
     filtered = _filter_by_species(filtered, preferred_species)
-    filtered = _filter_by_age_group(filtered, preferred_animal, preferred_age_group)
+    filtered = _filter_by_age_group(filtered, preferred_age_group)
     filtered = _filter_by_sex(filtered, sex_cd)
     filtered = _filter_by_neuter(filtered, neuter_yn)
 
@@ -66,7 +81,7 @@ def _filter_by_size(
     preferred_animal: Optional[str],
     preferred_size: Optional[str],
 ) -> List[Animal]:
-    if not _has_text(preferred_size):
+    if not _has_text(preferred_size) or _normalize_preferred_animal(preferred_animal) != "개":
         return animals
     return [animal for animal in animals if _match_size(animal, preferred_size)]
 
@@ -79,7 +94,6 @@ def _filter_by_species(animals: List[Animal], preferred_species: Optional[str]) 
 
 def _filter_by_age_group(
     animals: List[Animal],
-    preferred_animal: Optional[str],
     preferred_age_group: Optional[str],
 ) -> List[Animal]:
     if not _has_text(preferred_age_group):
@@ -129,34 +143,23 @@ def _score_animal(
         if any(keyword in special_mark for keyword in keywords):
             score += 1
 
-    return {
+    result = {
         "score": score,
-        "noticeNo": animal.get("noticeNo"),
-        "colorCd": animal.get("colorCd"),
         "AgeGroup": _age_group(animal, _animal_type(animal)),
         "Size": _size_label(animal),
         "upKindNm": animal.get("upKindNm") or _animal_type(animal),
         "kindNm": animal.get("kindNm") or _species_name(animal),
-        "careNm": animal.get("careNm"),
         "specialMark": special_mark or None,
-        "processState": animal.get("processState"),
-        "sexCd": animal.get("sexCd"),
-        "neuterYn": animal.get("neuterYn"),
-        "popfile1": animal.get("popfile1"),
-        "popfile2": animal.get("popfile2"),
-        "popfile3": animal.get("popfile3"),
-        "popfile4": animal.get("popfile4"),
-        "popfile5": animal.get("popfile5"),
-        "popfile6": animal.get("popfile6"),
-        "popfile7": animal.get("popfile7"),
-        "popfile8": animal.get("popfile8"),
     }
+    result.update({field: animal.get(field) for field in BASE_RESPONSE_FIELDS})
+    result.update({field: animal.get(field) for field in IMAGE_FIELDS})
+    return result
 
 
 def _normalize_preferred_animal(preferred_animal: Optional[str]) -> str:
     if not _has_text(preferred_animal):
         return ""
-    return "개" if preferred_animal == "강아지" else "고양이"
+    return ANIMAL_TYPE_MAP.get(preferred_animal.strip(), "")
 
 
 def _animal_type(animal: Animal) -> str:
@@ -258,13 +261,7 @@ def _parse_birth_year(age_text: Optional[str]) -> Optional[int]:
 
 def _sex_values(sex_cd: str) -> set[str]:
     normalized = sex_cd.strip()
-    if normalized == "수컷":
-        return {"수컷", "M"}
-    if normalized == "암컷":
-        return {"암컷", "F"}
-    if normalized == "미상":
-        return {"미상", "Q"}
-    return {normalized}
+    return SEX_CODE_MAP.get(normalized, {normalized})
 
 
 def _has_text(value: Optional[str]) -> bool:

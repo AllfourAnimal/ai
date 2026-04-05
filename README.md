@@ -1,11 +1,12 @@
 ai server
 
-## Sync Animal DB
+## Recommendation Demo
 
-1. Create a conda environment with Python 3.9.
-2. Install dependencies from `requirements.txt`.
-3. Create a repository root `.env` file based on `.env.example`.
-4. Set `ANIMAL_API_SERVICE_KEY`.
-5. Run `PYTHONPATH=src python -m database` or `animal-sync`.
+The recommendation server reads demo data directly from `data/seoul_animals.db`.
 
-This syncs all Seoul districts into a local SQLite database. The recommendation server reads only from that database.
+```bash
+conda create -n ai-server python=3.9 -y
+conda activate ai-server
+pip install -r requirements.txt
+PYTHONPATH=src python -m uvicorn recommendation_server.app.main:app --host 127.0.0.1 --port 8001 --reload
+```
