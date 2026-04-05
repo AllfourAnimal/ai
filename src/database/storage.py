@@ -26,6 +26,14 @@ class AnimalRepository:
                 animal.get("kindNm"),
                 animal.get("sexCd"),
                 animal.get("neuterYn"),
+                animal.get("popfile1"),
+                animal.get("popfile2"),
+                animal.get("popfile3"),
+                animal.get("popfile4"),
+                animal.get("popfile5"),
+                animal.get("popfile6"),
+                animal.get("popfile7"),
+                animal.get("popfile8"),
                 json.dumps(animal, ensure_ascii=False),
                 _utc_now(),
             )
@@ -46,10 +54,18 @@ class AnimalRepository:
                         kind_nm,
                         sex_cd,
                         neuter_yn,
+                        popfile1,
+                        popfile2,
+                        popfile3,
+                        popfile4,
+                        popfile5,
+                        popfile6,
+                        popfile7,
+                        popfile8,
                         raw_json,
                         synced_at
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     rows,
                 )
@@ -90,6 +106,14 @@ class AnimalRepository:
                     kind_nm TEXT,
                     sex_cd TEXT,
                     neuter_yn TEXT,
+                    popfile1 TEXT,
+                    popfile2 TEXT,
+                    popfile3 TEXT,
+                    popfile4 TEXT,
+                    popfile5 TEXT,
+                    popfile6 TEXT,
+                    popfile7 TEXT,
+                    popfile8 TEXT,
                     raw_json TEXT NOT NULL,
                     synced_at TEXT NOT NULL
                 );
@@ -101,7 +125,25 @@ class AnimalRepository:
                 ON animals(process_state);
                 """
             )
+            self._ensure_image_columns(connection)
             connection.commit()
+
+    def _ensure_image_columns(self, connection: sqlite3.Connection) -> None:
+        existing_columns = {
+            row[1] for row in connection.execute("PRAGMA table_info(animals)").fetchall()
+        }
+        for column_name in (
+            "popfile1",
+            "popfile2",
+            "popfile3",
+            "popfile4",
+            "popfile5",
+            "popfile6",
+            "popfile7",
+            "popfile8",
+        ):
+            if column_name not in existing_columns:
+                connection.execute(f"ALTER TABLE animals ADD COLUMN {column_name} TEXT")
 
 
 def _utc_now() -> str:

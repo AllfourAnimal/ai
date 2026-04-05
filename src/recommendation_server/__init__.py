@@ -1,1 +1,1 @@
-# AI Recommendation Package
+# Recommendation server package

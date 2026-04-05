@@ -1,11 +1,11 @@
 ai server
 
-## Animal Abandonment Ingestion
+## Sync Animal DB
 
 1. Create a conda environment with Python 3.9.
 2. Install dependencies from `requirements.txt`.
 3. Create a repository root `.env` file based on `.env.example`.
 4. Set `ANIMAL_API_SERVICE_KEY`.
-5. Run `PYTHONPATH=src python -m database --district 동대문구 --district 강남구 --limit 100`.
+5. Run `PYTHONPATH=src python -m database` or `animal-sync`.
 
-The demo saves a simplified JSON response to the repository `output/` directory by default, including shelter metadata and up to the requested number of animals.
+This syncs all Seoul districts into a local SQLite database. The recommendation server reads only from that database.

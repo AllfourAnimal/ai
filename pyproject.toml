@@ -10,7 +10,7 @@ dependencies = [
 ]
 
 [project.scripts]
-animal-demo = "database.demo:main"
+animal-sync = "database.__main__:main"
 
 [build-system]
 requires = ["setuptools>=68", "wheel"]

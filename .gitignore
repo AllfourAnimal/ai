@@ -1,5 +1,6 @@
 .env
 __pycache__/
 *.pyc
-output/*.json
-src/ai_server.egg-info
+data/*.db
+output/
+*.egg-info/

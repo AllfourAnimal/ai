@@ -1,1 +1,1 @@
-# API
+# Recommendation server app package
